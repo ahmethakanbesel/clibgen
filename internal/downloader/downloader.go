@@ -1,6 +1,7 @@
 package downloader
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
@@ -34,8 +35,13 @@ func NewDownloader(selectedBook book.Book, directLink string, outputFileDir stri
 func (d *Downloader) Download() error {
 	fmt.Println(console.Info("Initializing download "))
 
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+
 	req, _ := http.NewRequest("GET", d.directLink, nil)
-	resp, error := http.DefaultClient.Do(req)
+	resp, error := client.Do(req)
 
 	if error != nil {
 		fmt.Println(console.Error("Error downloading file: %s", error.Error()))
@@ -66,7 +72,7 @@ func (d *Downloader) Download() error {
 			f, _ = os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, 0666)
 			defer f.Close()
 		} else {
-			os.Exit(1)	
+			os.Exit(1)
 		}
 	} else {
 		// file doesnt exists
